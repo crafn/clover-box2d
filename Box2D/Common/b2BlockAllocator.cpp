@@ -62,7 +62,28 @@ b2BlockAllocator::b2BlockAllocator()
 	
 	memset(m_chunks, 0, m_chunkSpace * sizeof(b2Chunk));
 	memset(m_freeLists, 0, sizeof(m_freeLists));
+}
 
+b2BlockAllocator::~b2BlockAllocator()
+{
+	for (int32 i = 0; i < m_chunkCount; ++i)
+	{
+		b2Free(m_chunks[i].blocks);
+	}
+
+	b2Free(m_chunks);
+}
+
+void* b2BlockAllocator::Allocate(int32 size)
+{
+	if (size == 0)
+		return NULL;
+
+	b2Assert(0 < size);
+
+	// ***CLOVER EDIT***
+	// Moved initialization from ctor to here so that dll
+	// calling box2d will have the lookup table initialized
 	if (s_blockSizeLookupInitialized == false)
 	{
 		int32 j = 0;
@@ -82,24 +103,6 @@ b2BlockAllocator::b2BlockAllocator()
 
 		s_blockSizeLookupInitialized = true;
 	}
-}
-
-b2BlockAllocator::~b2BlockAllocator()
-{
-	for (int32 i = 0; i < m_chunkCount; ++i)
-	{
-		b2Free(m_chunks[i].blocks);
-	}
-
-	b2Free(m_chunks);
-}
-
-void* b2BlockAllocator::Allocate(int32 size)
-{
-	if (size == 0)
-		return NULL;
-
-	b2Assert(0 < size);
 
 	if (size > b2_maxBlockSize)
 	{
